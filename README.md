@@ -13,3 +13,5 @@ to do list:
 
 to do if wished by someone:
 * create a proper setting board to make it easy to change the request and the update frequency
+
+license: GPLv3, following the TTRSS license
