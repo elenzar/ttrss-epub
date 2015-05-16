@@ -111,7 +111,7 @@ class Epub extends Plugin implements IHandler {
 					(unread = true OR feed_id IS NULL) AND
 					ref_id = ttrss_entries.id AND
 					ttrss_user_entries.owner_uid = " . $_SESSION['uid'] . "
-				ORDER BY ttrss_entries.id LIMIT $limit OFFSET $offset");
+				ORDER BY ttrss_entries.id DESC LIMIT $limit OFFSET $offset");
 
 			$exportname = sha1($_SESSION['uid'] . $_SESSION['login']);
 
