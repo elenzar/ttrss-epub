@@ -108,16 +108,14 @@ class Epub extends Plugin implements IHandler {
 					ttrss_user_entries LEFT JOIN ttrss_feeds ON (ttrss_feeds.id = feed_id),
 					ttrss_entries
 				WHERE
-					(marked = true OR feed_id IS NULL) AND
+					(unread = true OR feed_id IS NULL) AND
 					ref_id = ttrss_entries.id AND
 					ttrss_user_entries.owner_uid = " . $_SESSION['uid'] . "
 				ORDER BY ttrss_entries.id LIMIT $limit OFFSET $offset");
 
 			$exportname = sha1($_SESSION['uid'] . $_SESSION['login']);
 
-			if ($offset == 0) {
-				$fp = fopen($dossier ."content.opf", "w");
-				fputs($fp, '<?xml version="1.0"  encoding="UTF-8"?>
+                        $epubOpfHead = '<?xml version="1.0"  encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="uuid_id">
 <metadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:calibre="http://calibre.kovidgoyal.net/2009/metadata" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <dc:creator opf:role="aut" opf:file-as="TinyTinyRSS">TinyTinyRSS</dc:creator>
@@ -132,7 +130,11 @@ class Epub extends Plugin implements IHandler {
 <meta name="calibre:user_categories" content="{}"/>
 <meta name="calibre:author_link_map" content="{&quot;Eric Steven Raymond&quot;: &quot;&quot;}"/>
 <dc:language>fr</dc:language>
-</metadata>');
+</metadata>';
+                        
+			if ($offset == 0) {
+				$fp = fopen($dossier ."content.opf", "w");
+				fputs($fp, $epubOpfHead);
 			} else {
 				$fp = fopen($dossier . $exportname.".xml", "a");
 			}
