@@ -160,6 +160,9 @@ class Epub extends Plugin implements IHandler {
 <title><a href="'.$line['link'].'"></a>'.$line['title'].'</title>
 </head>
 <body>
+<h1>
+'.$line['title'].'
+</h1>
 '.$line['content'].'
 </body>';
                                         
