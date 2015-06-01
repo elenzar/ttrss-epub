@@ -47,9 +47,6 @@ class Epub extends Plugin implements IHandler {
 		$this->host = $host;
 
 		$host->add_hook($host::HOOK_UPDATE_TASK, $this);
-
-		$host->add_hook($host::HOOK_PREFS_TAB, $this);
-		//$host->add_command("xml-import", "import articles from XML", $this, ":", "FILE");
 	}
 
 	function about() {
@@ -58,28 +55,18 @@ class Epub extends Plugin implements IHandler {
 			"lendar");
 	}
         
-        function csrf_ignore($method) {
+	function csrf_ignore($method) {
 		return false;
 	}
 
 	function before($method) {
 		return true;
-
+	}
 
 	function after() {
 		return true;
 	}
 
-
-	function save() {
-		$example_value = db_escape_string($_POST["example_value"]);
-
-		echo "Value set to $example_value (not really)";
-
-        
-	function get_prefs_js() {
-		return file_get_contents(dirname(__FILE__) . "/epub.js");
-	}
         
 	function hook_update_task() {
 		
@@ -98,7 +85,7 @@ class Epub extends Plugin implements IHandler {
 				(unread = true OR feed_id IS NULL) AND
 				ref_id = ttrss_entries.id AND
 				ttrss_user_entries.owner_uid = " . $_SESSION['uid'] . "
-			ORDER BY ttrss_entries.id DESC LIMIT $limit OFFSET $offset");
+			ORDER BY ttrss_entries.id DESC LIMIT $limit OFFSET $offset";
 	
 		$exportname = sha1($_SESSION['uid'] . $_SESSION['login']);
 
@@ -160,7 +147,6 @@ class Epub extends Plugin implements IHandler {
                                         $nomFichier = "article".$i.".html";
 					$article = fopen($dossier . $nomFichier, "w");
 					fputs($article, "<?xml version='1.0' encoding='utf-8'?><html xmlns='http://www.w3.org/1999/xhtml'>");
-						."<html xmlns='http://www.w3.org/1999/xhtml'>");
                                         $contenu = str_replace(array("&nbsp;"), "", $line['content']);
                                         $nouvelleEntree = 
 						'<head><title><a href="'.$line['link'].'"></a>'.$line['title'].'</title></head>'.
@@ -199,45 +185,6 @@ class Epub extends Plugin implements IHandler {
                 deleteDir($cheminAbsolu,$dos.'/');
                 //print json_encode(array("exported" => $exported));
                
-	}
-        
-        //FONCTIONS D'INTERFACE
-        
-        function exportDataEpub() {
-
-		print "<p style='text-align : center' id='export_status_message'>You need to prepare exported data first by clicking the button below.</p>";
-
-		print "<div align='center'>";
-		print "<button dojoType=\"dijit.form.Button\"
-			onclick=\"dijit.byId('epExportDlg').prepare()\">".
-			__('Prepare data')."</button>";
-
-		print "<button dojoType=\"dijit.form.Button\"
-			onclick=\"dijit.byId('epExportDlg').hide()\">".
-			__('Close this window')."</button>";
-
-		print "</div>";
-
-
-	}
-        
-        function hook_prefs_tab($args) {
-		if ($args != "prefFeeds") return;
-
-		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('ePub generator')."\">";
-
-		//print_notice(__("You can export and import your Starred and Archived articles for safekeeping or when migrating between tt-rss instances of same version."));
-
-		print "<p>";
-
-		print "<button dojoType=\"dijit.form.Button\" onclick=\"return exportDataEpub()\">".
-			__('generate')."</button> ";
-
-		print "<hr>";
-
-		print "</p>";
-
-		print "</div>"; # pane
 	}
         
         function api_version() {
