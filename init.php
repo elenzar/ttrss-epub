@@ -2,6 +2,7 @@
 
 class Epub extends Plugin {
 	private $host;
+	private $cache_dir;	
 
 	function init($host) {
 		$this->host = $host;
@@ -18,7 +19,7 @@ class Epub extends Plugin {
 
 			if (is_writable($this->cache_dir)) {
 				$host->add_hook($host::HOOK_UPDATE_TASK, $this);
-                                 $host->add_hook($host::HOOK_HOUSE_KEEPING, $this);
+                                // $host->add_hook($host::HOOK_HOUSE_KEEPING, $this);
 			} else {
 				user_error("The epub files directory is not writable.", E_USER_WARNING);
 			}
@@ -32,7 +33,7 @@ class Epub extends Plugin {
 
 	function about() {
 		return array(1.0,
-			"Exports all articles into an epub file",
+			"Exports periodically all articles into an epub file",
 			"lendar",
 			true);
 	}
@@ -70,24 +71,20 @@ class Epub extends Plugin {
 	
 		$exportname = sha1($_SESSION['uid'] . $_SESSION['login']);
 
-		$dossierRacine = dirname(__FILE__).'/'.$exportname; 
+		$dossierRacine = $this->cache_dir; 
 
-//		generateEpub($requete,$dossierRacine);
+		$this->generateEpub($requete,$dossierRacine,$exportname);
 	 }
 
         //FONCTION PRINCIPALE
-	function generateEpub($requete,$dossierRacine) {
+	function generateEpub($requete,$dossierRacine,$nom) {
                 
-		$exported = 0;
-                
-                $cheminAbsolu = $dossierRacine;
-                $nomZip = $cheminAbsolu . '/output.epub';
+                $nomZip = $dossierRacine . '/output.epub';
 
                 if (is_file($nomZip)) {unlink($nomZip);}
                 
-		chdir($dossierRacine);
-                $dos = "epub" . date(DATE_ISO8601);
-                $dossier = $dos . "/";
+                $dos = "epub" . $nom . date(DATE_ISO8601);
+                $dossier = $dossierRacine . $dos . "/";
                 mkdir($dossier);
                 
 		if ($offset < 10000 && is_writable($dossier)) {
@@ -161,11 +158,9 @@ class Epub extends Plugin {
 
 		}
                                 
-                creationZip($dossier, $nomZip);
+                $this->creationZip($dossier, $nomZip);
                 //suppression des fichiers temporaires
-                deleteDir($cheminAbsolu,$dos.'/');
-                //print json_encode(array("exported" => $exported));
-               
+                $this->deleteDir($dossierRacine.$dos.'/');
 	}
         
         function api_version() {
@@ -177,14 +172,14 @@ class Epub extends Plugin {
 	private function creationZip($dossier,$nomZip) {
 	    $zip = new ZipArchive();
 	    //changement de répertoire pour avoir l'arborescence qui va bien dans l'epub
-	    chdir($dossier);
+	    //chdir($dossier);
 	    
 	    if ($zip->open($nomZip, ZipArchive::CREATE)!==TRUE) {
 		exit("cannot open <$nomZip>\n");
 		fclose($test);
 	    }
 
-	    $files = glob('*', GLOB_MARK);
+	    $files = glob($dossier.'*', GLOB_MARK);
 	    foreach ($files as $file) {
 		
 		if (!is_dir($file)) {
