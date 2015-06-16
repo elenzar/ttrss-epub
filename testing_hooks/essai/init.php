@@ -19,7 +19,7 @@ class Essai extends Plugin {
 		return array(1.0,
 			"essaie de faire tourner une fonction periodiquement",
 			"elenzar",
-			false);
+			true);
 	}
 
 	function init($host) {

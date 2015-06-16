@@ -1,61 +1,43 @@
 <?php
-	//FONCTIONS GENERALES UTILES CI APRES
-	function creationZip($dossier,$nomZip) {
-	    $zip = new ZipArchive();
-	    //changement de répertoire pour avoir l'arborescence qui va bien dans l'epub
-	    chdir($dossier);
-	    
-	    if ($zip->open($nomZip, ZipArchive::CREATE)!==TRUE) {
-		exit("cannot open <$nomZip>\n");
-		fclose($test);
-	    }
 
-	    $files = glob('*', GLOB_MARK);
-	    foreach ($files as $file) {
-		
-		if (!is_dir($file)) {
-		    $zip->addFile($file);
-		}
-	    }
-	    $zip->close();
-	}
-
-	//fonction tirée de http://stackoverflow.com/questions/3349753/delete-directory-with-files-in-it
-	function deleteDir($parentDir,$dirName) {
-	    chdir($parentDir);
-	    if (! is_dir($dirName)) {
-		throw new InvalidArgumentException("$dirName must be a directory");
-	    }
-	    if (substr($dirName, strlen($dirName) - 1, 1) != '/') {
-		$dirName .= '/';
-	    }
-	    $files = glob($dirName . '*', GLOB_MARK);
-	    foreach ($files as $file) {
-		if (is_dir($file)) {
-		    self::deleteDir($file);
-		} else {
-		    unlink($file);
-		}
-	    }
-	    rmdir($dirName);
-	}
-
-class Epub extends Plugin implements IHandler {
+class Epub extends Plugin {
 	private $host;
 
 	function init($host) {
 		$this->host = $host;
 
-		$host->add_hook($host::HOOK_UPDATE_TASK, $this);
+		$this->cache_dir = CACHE_DIR . "/epubfiles/";
+
+		if (!is_dir($this->cache_dir)) {
+			mkdir($this->cache_dir);}
+		
+		if (is_dir($this->cache_dir)) {
+
+			if (!is_writable($this->cache_dir)) {
+				chmod($this->cache_dir, 0777);}
+
+			if (is_writable($this->cache_dir)) {
+				$host->add_hook($host::HOOK_UPDATE_TASK, $this);
+                                 $host->add_hook($host::HOOK_HOUSE_KEEPING, $this);
+			} else {
+				user_error("The epub files directory is not writable.", E_USER_WARNING);
+			}
+
+		} else {
+			user_error("Unable to create EPUB cache directory.", E_USER_WARNING);
+		}
+
+
 	}
 
 	function about() {
 		return array(1.0,
 			"Exports all articles into an epub file",
-			"lendar");
+			"lendar",
+			true);
 	}
         
-	function csrf_ignore($method) {
+/*	function csrf_ignore($method) {
 		return false;
 	}
 
@@ -66,11 +48,10 @@ class Epub extends Plugin implements IHandler {
 	function after() {
 		return true;
 	}
-
+*/
         
 	function hook_update_task() {
 		
-		$offset = (int) db_escape_string($_REQUEST['offset']);
 		$limit = 250;
 
 		$requete = "SELECT
@@ -91,7 +72,7 @@ class Epub extends Plugin implements IHandler {
 
 		$dossierRacine = dirname(__FILE__).'/'.$exportname; 
 
-		generateEpub($requete,$dossierRacine);
+//		generateEpub($requete,$dossierRacine);
 	 }
 
         //FONCTION PRINCIPALE
@@ -189,6 +170,47 @@ class Epub extends Plugin implements IHandler {
         
         function api_version() {
 		return 2;
+	}
+
+
+	//FONCTIONS GENERALES UTILES CI APRES
+	private function creationZip($dossier,$nomZip) {
+	    $zip = new ZipArchive();
+	    //changement de répertoire pour avoir l'arborescence qui va bien dans l'epub
+	    chdir($dossier);
+	    
+	    if ($zip->open($nomZip, ZipArchive::CREATE)!==TRUE) {
+		exit("cannot open <$nomZip>\n");
+		fclose($test);
+	    }
+
+	    $files = glob('*', GLOB_MARK);
+	    foreach ($files as $file) {
+		
+		if (!is_dir($file)) {
+		    $zip->addFile($file);
+		}
+	    }
+	    $zip->close();
+	}
+
+	//fonction tirée de http://stackoverflow.com/questions/3349753/delete-directory-with-files-in-it
+	private function deleteDir($dirName) {
+	    if (! is_dir($dirName)) {
+		throw new InvalidArgumentException("$dirName must be a directory");
+	    }
+	    if (substr($dirName, strlen($dirName) - 1, 1) != '/') {
+		$dirName .= '/';
+	    }
+	    $files = glob($dirName . '*', GLOB_MARK);
+	    foreach ($files as $file) {
+		if (is_dir($file)) {
+		    self::deleteDir($file);
+		} else {
+		    unlink($file);
+		}
+	    }
+	    rmdir($dirName);
 	}
 
 }
