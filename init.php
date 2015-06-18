@@ -55,38 +55,48 @@ class Epub extends Plugin {
 		
 		$limit = 250;
 
-		$requete = "SELECT
-				ttrss_entries.title,
-				content,
-				link,
-				ttrss_feeds.title AS feed_title
-			FROM
-				ttrss_user_entries LEFT JOIN ttrss_feeds ON (ttrss_feeds.id = feed_id),
-				ttrss_entries
-			WHERE
-				(unread = true OR feed_id IS NULL) AND
-				ref_id = ttrss_entries.id AND
-				ttrss_user_entries.owner_uid = " . $_SESSION['uid'] . "
-			ORDER BY ttrss_entries.id DESC LIMIT $limit OFFSET $offset";
-	
-		$exportname = sha1($_SESSION['uid'] . $_SESSION['login']);
+		$reqUtilisateurs = "SELECT id FROM ttrss_users";
 
 		$dossierRacine = $this->cache_dir; 
 
-		$this->generateEpub($requete,$dossierRacine,$exportname);
+		$utilisateurs = db_query($reqUtilisateurs);
+		while ($ut = db_fetch_assoc($utilisateurs)) {
+			$requete = "SELECT
+					ttrss_entries.title,
+					content,
+					link,
+					ttrss_feeds.title AS feed_title
+				FROM
+					ttrss_user_entries LEFT JOIN ttrss_feeds ON (ttrss_feeds.id = feed_id),
+					ttrss_entries
+				WHERE
+					(unread = true OR feed_id IS NULL) AND
+					ref_id = ttrss_entries.id AND
+					ttrss_user_entries.owner_uid = " . $ut['id'] . "
+				ORDER BY ttrss_entries.id DESC LIMIT $limit";
+			$this->generateEpub($requete,$dossierRacine,$ut['id']);
+		}
 	 }
 
         //FONCTION PRINCIPALE
-	function generateEpub($requete,$dossierRacine,$nom) {
-                
-                $nomZip = $dossierRacine . '/output.epub';
-
+	function generateEpub($requete,$dossierRacine,$id) {
+               //preparation de la variable zip 
+                $nomZip = $dossierRacine . '/output_user_'.$id.'.epub';
                 if (is_file($nomZip)) {unlink($nomZip);}
+	        
+		$zip = new ZipArchive();
+	    
+	        if ($zip->open($nomZip, ZipArchive::CREATE)!==TRUE) {
+			exit("cannot open <$nomZip>\n");
+	        }
+ 
+
                 
-                $dos = "epub" . $nom . date(DATE_ISO8601);
+                $dos = "epub_user_" . $id . '_' . date(DATE_ISO8601);
                 $dossier = $dossierRacine . $dos . "/";
                 mkdir($dossier);
-                
+               
+		//coeur de la fonction: construction du zip et visite des articles a ajouter 
 		if ($offset < 10000 && is_writable($dossier)) {
 			$result = db_query($requete);
 
@@ -106,8 +116,8 @@ class Epub extends Plugin {
 <dc:language>fr</dc:language>
 </metadata>
 ';
-                        
-			$fp = fopen($dossier ."content.opf", "w");
+                        $pathContent = $dossier ."content.opf"; 
+			$fp = fopen($pathContent, "w");
 			fputs($fp, $epubOpfHead);
                         
                         //creation des chaines completant l'index
@@ -123,7 +133,8 @@ class Epub extends Plugin {
                                     // bloc de création des fichiers .xml où se trouve le contenu + écriture dans l'index de l'epub
                                     // creation du fichier html contenant l'article
                                         $nomFichier = "article".$i.".html";
-					$article = fopen($dossier . $nomFichier, "w");
+					$articlePath = $dossier . $nomFichier;
+					$article = fopen($articlePath, "w");
 					fputs($article, "<?xml version='1.0' encoding='utf-8'?><html xmlns='http://www.w3.org/1999/xhtml'>");
                                         $contenu = str_replace(array("&nbsp;"), "", $line['content']);
                                         $nouvelleEntree = 
@@ -135,6 +146,8 @@ class Epub extends Plugin {
                                     //ajout des lignes qui vont bien pour l'index
                                         $manifest = $manifest.'<item href="'.$nomFichier.'" id="id'.$i.'" media-type="application/xhtml+xml"/>';
                                         $spine = $spine.'<itemref idref="id'.$i.'"/>';
+					//insertion de l'article dans le zip; le $nomFichier permet d'avoir l'arborescence qui va bien dans le zip (tout a la racine)
+					$zip->addFile($articlePath,$nomFichier);
                                     //incrément du compteur
                                         $i = $i+1;
                                     
@@ -154,11 +167,14 @@ class Epub extends Plugin {
                                 fputs($fp, $manifest);
                                 fputs($fp, $spine);
 				fclose($fp);
+				$zip->addFile($pathContent,"content.opf");
 			}
 
 		}
-                                
-                $this->creationZip($dossier, $nomZip);
+                
+
+		$zip->close();
+                
                 //suppression des fichiers temporaires
                 $this->deleteDir($dossierRacine.$dos.'/');
 	}
@@ -169,26 +185,6 @@ class Epub extends Plugin {
 
 
 	//FONCTIONS GENERALES UTILES CI APRES
-	private function creationZip($dossier,$nomZip) {
-	    $zip = new ZipArchive();
-	    //changement de répertoire pour avoir l'arborescence qui va bien dans l'epub
-	    //chdir($dossier);
-	    
-	    if ($zip->open($nomZip, ZipArchive::CREATE)!==TRUE) {
-		exit("cannot open <$nomZip>\n");
-		fclose($test);
-	    }
-
-	    $files = glob($dossier.'*', GLOB_MARK);
-	    foreach ($files as $file) {
-		
-		if (!is_dir($file)) {
-		    $zip->addFile($file);
-		}
-	    }
-	    $zip->close();
-	}
-
 	//fonction tirée de http://stackoverflow.com/questions/3349753/delete-directory-with-files-in-it
 	private function deleteDir($dirName) {
 	    if (! is_dir($dirName)) {
