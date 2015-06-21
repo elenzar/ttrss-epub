@@ -1,6 +1,6 @@
 <?php
 
-class Epub extends Plugin {
+class Epub extends Plugin implements IHandler {
 	private $host;
 	private $cache_dir;	
 
@@ -18,11 +18,11 @@ class Epub extends Plugin {
 				chmod($this->cache_dir, 0777);}
 
 			if (is_writable($this->cache_dir)) {
-				$host->add_hook($host::HOOK_UPDATE_TASK, $this);
-                                // $host->add_hook($host::HOOK_HOUSE_KEEPING, $this);
+                                $host->add_hook($host::HOOK_HOUSE_KEEPING, $this);
 			} else {
 				user_error("The epub files directory is not writable.", E_USER_WARNING);
 			}
+			$host->add_hook($host::HOOK_PREFS_TAB, $this);
 
 		} else {
 			user_error("Unable to create EPUB cache directory.", E_USER_WARNING);
@@ -37,21 +37,89 @@ class Epub extends Plugin {
 			"lendar",
 			true);
 	}
-        
-/*	function csrf_ignore($method) {
-		return false;
+	
+	//functions csrf_ignore, before and after taken and adapted after the import_export plugin        
+	function csrf_ignore($method) {
+		return in_array($method, array("telechargement_fichier"));
 	}
 
 	function before($method) {
-		return true;
+		return $_SESSION["uid"] != false;
 	}
 
 	function after() {
 		return true;
 	}
-*/
-        
-	function hook_update_task() {
+       
+	//FONCTION D'INTERFACE
+	function get_prefs_js() {
+		return file_get_contents(dirname(__FILE__) . "/epub.js");
+	}
+ 
+        function hook_prefs_tab($args) {
+		if ($args != "prefPrefs") return;
+
+		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('ePub file')."\">";
+		print "<p>";
+
+		$exportname = $this->cache_dir . '/output_user_'. $_SESSION['uid'] .'.epub';
+	/*	print "<button dojoType=\"dijit.form.Button\" onclick=\"return exportEpub()\">".
+			__('get latest generated ePub file')."</button> ";
+	*/	
+		if (file_exists($exportname)) {
+			//print "You can download your epub file by clicking the following link:</br><a href=backend.php?op=pluginhandler&plugin=epub&subop=telechargementfichier");
+		} else {
+			print "No epub file has been generated for you so far.";
+		}
+		
+		print "<hr>";
+
+		print "</p>";
+
+		print "</div>"; # pane
+	}
+
+	
+	function exportEpub() {
+
+		print "<p style='text-align : center' id='export_epub_status_message'>Click the button below to get your file.</p>";
+
+		print "<div align='center'>";
+		print "<button dojoType=\"dijit.form.Button\"
+			onclick=\"dijit\">".
+			__('get epub file')."</button>";
+		
+	/*	print "<button dojoType=\"dijit.form.Button\"
+			onclick=\"dijit.byId('epubExportDlg').prepare()\">".
+			__('get epub file')."</button>";
+
+	/*	print "<button dojoType=\"dijit.form.Button\"
+			onclick=\"dijit.byId('dataExportDlg').hide()\">".
+			__('Close this window')."</button>";
+	*/
+		print "</div>";
+	
+
+	}
+
+	function telechargementfichier() {
+	//same code as 'exportget' function in the import_export plugin, adapted to serve the epub file and with a different name to avoid conflict in case this plugin frontend ends on the same page as the import_export plugin frontend
+		$exportname = $this->cache_dir . '/output_user_'. $_SESSION['uid'] .'.epub';
+
+		if (file_exists($exportname)) {
+			header("Content-type: application/epub+zip");
+			header("Content-Disposition: attachment; filename=TinyTinyRSS_newspaper.epub");
+			echo file_get_contents($exportname);
+			echo $_SESSION['uid'];
+			$f = fopen($this->cache_dir."testDL.txt");
+			fputs($f,$_SESSION['uid']);
+			fclose($f);
+		} else {
+			echo "File not found.";
+		}
+	}
+	//PARTIE DE GENERATION DES FICHIERS EPUB
+	function hook_house_keeping() {
 		
 		$limit = 250;
 
