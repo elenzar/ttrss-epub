@@ -33,7 +33,7 @@ class Epub extends Plugin implements IHandler {
 
 	function about() {
 		return array(1.0,
-			"Exports periodically all articles into an epub file",
+			"Exports periodically all unread articles into an epub file",
 			"lendar",
 			true);
 	}

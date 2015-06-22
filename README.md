@@ -2,6 +2,8 @@
 epub generator extension for TinyTinyRSS
 
 ###state fo the work
+####warning: epub files not correct at the moment
+
 The init.php file, in the right folder (./plugins/epub/) and enabled as a system plugin (i.e. through the config.php file) should create an .epub file containing all the unread articles, showing the most recent ones first, for every user, in the cache directory (./cache/epubfiles). 
 ####WIP
 working on the interface in the prefs panel to allow the download fo the file from there
