@@ -78,7 +78,6 @@ class Epub extends Plugin implements IHandler {
 
 		print "</div>"; # pane
 	}
-
 	
 	function exportEpub() {
 
@@ -236,6 +235,33 @@ class Epub extends Plugin implements IHandler {
                                 fputs($fp, $spine);
 				fclose($fp);
 				$zip->addFile($pathContent,"content.opf");
+				
+				//addition of some files to make a proper epub
+				$mimetype_file_path = $dossier . "mimetype"; 
+				$mimetype_file = fopen($mimetype_file_path,"w");
+				fputs($mimetype_file,"application/epub+zip");
+				fclose($mimetype_file);
+				$zip->addFile($mimetype_file_path,"mimetype");
+
+				$container_content = 
+'<?xml version="1.0" encoding="UTF-8"?>
+
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+
+   <rootfiles>
+
+      <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
+
+   </rootfiles>
+
+</container>';
+				$container_path = $dossier . "container.xml"; 
+				$container_file = fopen($container_path,"w");
+				fputs($container_file,$container_content);
+				fclose($container_file);
+				$zip->addFile($container_path,"META-INF/container.xml");
+				
+
 			}
 
 		}
