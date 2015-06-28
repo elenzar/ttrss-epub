@@ -167,8 +167,7 @@ class Epub extends Plugin implements IHandler {
 		if ($offset < 10000 && is_writable($dossier)) {
 			$result = db_query($requete);
 
-                        $epubOpfHead = '
-<?xml version="1.0"  encoding="UTF-8"?>
+                        $epubOpfHead = '<?xml version="1.0"  encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="uuid_id">
 <metadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:calibre="http://calibre.kovidgoyal.net/2009/metadata" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <dc:creator opf:role="aut" opf:file-as="TinyTinyRSS">TinyTinyRSS</dc:creator>
@@ -189,8 +188,10 @@ class Epub extends Plugin implements IHandler {
                         
                         //creation des chaines completant l'index
                         $manifest = '<manifest>
+<item href="titlepage.html" id="titlepage" media-type="application/xhtml+xml"/>
                                     ';
                         $spine = '<spine toc="ncx">
+<itemref idref="titlepage"/>
                                  ';
 
 			if ($fp) {
@@ -237,12 +238,15 @@ class Epub extends Plugin implements IHandler {
 				$zip->addFile($pathContent,"content.opf");
 				
 				//addition of some files to make a proper epub
+				
+				//mimetype
 				$mimetype_file_path = $dossier . "mimetype"; 
 				$mimetype_file = fopen($mimetype_file_path,"w");
 				fputs($mimetype_file,"application/epub+zip");
 				fclose($mimetype_file);
 				$zip->addFile($mimetype_file_path,"mimetype");
-
+				
+				//container
 				$container_content = 
 '<?xml version="1.0" encoding="UTF-8"?>
 
@@ -261,6 +265,15 @@ class Epub extends Plugin implements IHandler {
 				fclose($container_file);
 				$zip->addFile($container_path,"META-INF/container.xml");
 				
+				//titlepage
+				$titlepage_content = '<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>epub title</title></head>
+<body><h1>unread TinyTinyRSS articles</h1></body>';
+				$titlepage_file_path = $dossier . "mimetype"; 
+				$titlepage_file = fopen($mimetype_file_path,"w");
+				fputs($titlepage_file,$titlepage_content);
+				fclose($titlepage_file);
+				$zip->addFile($titlepage_file_path,"mimetype");
 
 			}
 
