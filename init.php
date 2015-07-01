@@ -3,11 +3,13 @@
 class Epub extends Plugin implements IHandler {
 	private $host;
 	private $cache_dir;	
-
+	private $blacklist;
+	
 	function init($host) {
 		$this->host = $host;
 
 		$this->cache_dir = CACHE_DIR . "/epubfiles/";
+		$this->blacklist = ["&nbsp;","class","style","alt"];
 
 		if (!is_dir($this->cache_dir)) {
 			mkdir($this->cache_dir);}
@@ -78,7 +80,7 @@ class Epub extends Plugin implements IHandler {
 
 		print "</div>"; # pane
 	}
-	
+
 	function exportEpub() {
 
 		print "<p style='text-align : center' id='export_epub_status_message'>Click the button below to get your file.</p>";
@@ -204,7 +206,7 @@ class Epub extends Plugin implements IHandler {
 					$articlePath = $dossier . $nomFichier;
 					$article = fopen($articlePath, "w");
 					fputs($article, "<?xml version='1.0' encoding='utf-8'?><html xmlns='http://www.w3.org/1999/xhtml'>");
-                                        $contenu = str_replace(array("&nbsp;"), "", $line['content']);
+                                        $contenu = utf8_encode($line['content']);//str_replace($this->blacklist, "", $line['content']);
                                         $nouvelleEntree = 
 						'<head><title><a href="'.$line['link'].'"></a>'.$line['title'].'</title></head>'.
 						'<body><h1>'.$line['title'].'</h1><h4>(flux: '.$line['feed_title'].')</h4>'. $contenu .'</body>';
