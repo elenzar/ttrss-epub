@@ -24,7 +24,7 @@ class Epub extends Plugin implements IHandler {
 			} else {
 				user_error("The epub files directory is not writable.", E_USER_WARNING);
 			}
-			$host->add_hook($host::HOOK_PREFS_TAB, $this);
+			//$host->add_hook($host::HOOK_PREFS_TAB, $this);
 
 		} else {
 			user_error("Unable to create EPUB cache directory.", E_USER_WARNING);
@@ -58,7 +58,7 @@ class Epub extends Plugin implements IHandler {
 		return file_get_contents(dirname(__FILE__) . "/epub.js");
 	}
  
-        function hook_prefs_tab($args) {
+        /*function hook_prefs_tab($args) {
 		if ($args != "prefPrefs") return;
 
 		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('ePub file')."\">";
@@ -67,7 +67,7 @@ class Epub extends Plugin implements IHandler {
 		$exportname = $this->cache_dir . '/output_user_'. $_SESSION['uid'] .'.epub';
 	/*	print "<button dojoType=\"dijit.form.Button\" onclick=\"return exportEpub()\">".
 			__('get latest generated ePub file')."</button> ";
-	*/	
+	//	
 		if (file_exists($exportname)) {
 			//print "You can download your epub file by clicking the following link:</br><a href=backend.php?op=pluginhandler&plugin=epub&subop=telechargementfichier");
 		} else {
@@ -79,7 +79,7 @@ class Epub extends Plugin implements IHandler {
 		print "</p>";
 
 		print "</div>"; # pane
-	}
+	}*/
 
 	function exportEpub() {
 
