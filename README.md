@@ -2,12 +2,13 @@
 epub generator extension for TinyTinyRSS
 
 ###state fo the work
-####warning: epub files not correct at the moment
+####warning: project no longer pursued
+####most recent problems (as of 25/07/2015)
+* some of the articles of the generated files are not displaying (blank page + unable to flip page) on both Kobo Touch and the Aldiko app (Android); likely to be isuees about the articles html formatting, but I could not figure out so far the issuing parts
+* the code to download the files from the prefs panel is not finished and cause some issues to the whole ttrss instance, so it has been deactivated (commented) 
 
+####quick description
 The init.php file, in the right folder (./plugins/epub/) and enabled as a system plugin (i.e. through the config.php file) should create an .epub file containing all the unread articles, showing the most recent ones first, for every user, in the cache directory (./cache/epubfiles). 
-####WIP
-* working on the interface in the prefs panel to allow the download fo the file from there
-* cleaning the contents of articles to remove issuing characters
 
 ###note on this plugin
 built on the basis of the import/export plugin
